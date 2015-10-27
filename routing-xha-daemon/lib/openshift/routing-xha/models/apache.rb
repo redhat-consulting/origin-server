@@ -68,6 +68,7 @@ module OpenShift
       @logger.debug 'create_pool...'
       fname = "#{@confdir}/#{pool_name}.pool"
       File.write(fname, '')
+      File.chmod(0644, fname)
     end
 
     def delete_pool pool_name
@@ -105,6 +106,7 @@ module OpenShift
 
         fname = "#{@confdir}/#{pool_name}.pool"
         File.write(fname, servers)
+        File.chmod(0644, fname)
       end
     end
 
@@ -123,6 +125,7 @@ module OpenShift
 
         fname = "#{@confdir}/#{pool_name}.pool"
         File.write(fname, servers)
+        File.chmod(0644, fname)
       end
     end
 
@@ -156,6 +159,7 @@ module OpenShift
       alias_template = ERB.new(ALIAS)
       entries[pool_name] = "#{public_ip}:#{public_port}"
       File.write(fname, alias_template.result(binding))
+      File.chmod(0644, fname)
       reload_service unless @reinit
     end
 
@@ -169,6 +173,7 @@ module OpenShift
       else
         alias_template = ERB.new(ALIAS)
         File.write(fname, alias_template.result(binding))
+        File.chmod(0644, fname)
       end
       reload_service unless @reinit
     end
@@ -186,7 +191,9 @@ module OpenShift
       fname_crt = "#{@confdir}/#{@certs_dir}/#{alias_str}.crt"
       fname_key = "#{@confdir}/#{@certs_dir}/#{alias_str}.key"
       File.write(fname_crt, ssl_cert);
+      File.chmod(0644, fname_crt)
       File.write(fname_key, private_key);
+      File.chmod(0644, fname_key)
       `restorecon -R #{@confdir}`
 
       # Enable the alias specific certs in the configuration and
@@ -274,6 +281,7 @@ module OpenShift
 
       # Include the new configuration
       File.write("#{orig_confdir}/ose_routing.conf", "NameVirtualHost *:443\nInclude #{@confdir}/*.conf\n")
+      File.chmod(0644, "#{orig_confdir}/ose_routing.conf")
     end
 
     ALIAS = %q{
@@ -284,14 +292,19 @@ module OpenShift
     ProxyStatus on
     ProxyPreserveHost On
     ServerName <%= alias_str %>
-    ProxyPass / balancer://<%= alias_str %>
+    ProxyPass / balancer://<%= alias_str %>/
 
     SSLEngine on
     # SSLCertificateFile <%= @permanent_confdir %>/<%= @certs_dir %>/<%= alias_str %>.crt
     # SSLCertificateKeyFile <%= @permanent_confdir %>/<%= @certs_dir %>/<%= alias_str %>.key
 
-    SSLProtocol all -SSLv2
-    SSLCipherSuite ALL:!ADH:!EXPORT:!SSLv2:RC4+RSA:+HIGH:+MEDIUM:+LOW
+    # SSL Defaults for this vhost
+    SSLProtocol ALL -SSLv2 -SSLv3
+    SSLHonorCipherOrder On
+    # These are recommendations based on known cipher research as of March 2014;
+    # please consult your own security experts to determine your own appropriate settings.
+    SSLCipherSuite kEECDH:+kEECDH+SHA:kEDH:+kEDH+SHA:+kEDH+CAMELLIA:kECDH:+kECDH+SHA:kRSA:+kRSA+SHA:+kRSA+CAMELLIA:!aNULL:!eNULL:!SSLv2:!RC4:!DES:!EXP:!SEED:!IDEA:+3DES
+
     SSLCertificateFile /etc/pki/tls/certs/localhost.crt
     SSLCertificateKeyFile /etc/pki/tls/private/localhost.key
 
