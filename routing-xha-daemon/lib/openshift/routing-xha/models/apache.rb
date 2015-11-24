@@ -298,12 +298,8 @@ module OpenShift
     # SSLCertificateFile <%= @permanent_confdir %>/<%= @certs_dir %>/<%= alias_str %>.crt
     # SSLCertificateKeyFile <%= @permanent_confdir %>/<%= @certs_dir %>/<%= alias_str %>.key
 
-    # SSL Defaults for this vhost
-    SSLProtocol ALL -SSLv2 -SSLv3
-    SSLHonorCipherOrder On
-    # These are recommendations based on known cipher research as of March 2014;
-    # please consult your own security experts to determine your own appropriate settings.
-    SSLCipherSuite kEECDH:+kEECDH+SHA:kEDH:+kEDH+SHA:+kEDH+CAMELLIA:kECDH:+kECDH+SHA:kRSA:+kRSA+SHA:+kRSA+CAMELLIA:!aNULL:!eNULL:!SSLv2:!RC4:!DES:!EXP:!SEED:!IDEA:+3DES
+    SSLProtocol all -SSLv2
+    SSLCipherSuite ALL:!ADH:!EXPORT:!SSLv2:RC4+RSA:+HIGH:+MEDIUM:+LOW
 
     SSLCertificateFile /etc/pki/tls/certs/localhost.crt
     SSLCertificateKeyFile /etc/pki/tls/private/localhost.key
